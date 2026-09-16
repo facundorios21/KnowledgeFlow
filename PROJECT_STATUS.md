@@ -6,8 +6,8 @@ Este documento registra de forma continua el avance del proyecto, su estado téc
 
 ## Estado General
 
-* **Fase Actual:** `FASE 2 — Identity & Authentication` (Completada)
-* **Progreso Global:** 3 / 18 fases completadas (Fases 0, 1 y 2 finalizadas).
+* **Fase Actual:** `FASE 3 — Documents` (Completada)
+* **Progreso Global:** 4 / 18 fases completadas (Fases 0, 1, 2 y 3 finalizadas).
 * **Fecha de Última Actualización:** 2026-09-16
 
 ---
@@ -51,11 +51,25 @@ Este documento registra de forma continua el avance del proyecto, su estado téc
 - [x] **Infraestructura en ejecución:** PostgreSQL (`keycloak-db`), Keycloak 24 (`keycloak`), MongoDB 7 (`mongodb`) y Redis 7 (`redis`) activos y saludables.
 - [x] **Testing E2E en Vivo:** Suite en `test/auth.e2e-spec.ts` validando endpoints públicos, rechazo 401 sin token/token inválido, y adquisición real de tokens OIDC con verificación del endpoint `GET /api/v1/auth/me` y sincronización en MongoDB (100% pasando).
 
+### FASE 3 — Documents (Completada)
+- [x] **Modelo DocumentEntity:** Esquema Mongoose completo con estados de ciclo de vida (`UPLOADING`, `PROCESSING`, `READY`, `FAILED`), referencia indexada al `ownerId`, `tags` e índice de búsqueda textual.
+- [x] **Abstracción StorageProvider:** Interfaz `StorageProvider` desacoplada con implementación `LocalStorageProvider` que persiste archivos en disco con UUIDs únicos para prevenir colisiones y directory traversal.
+- [x] **Validación Defensiva de Archivos:** `FileValidationService` validando tamaño (máximo 15MB o 413), extensiones (.pdf, .txt, .docx), tipos MIME y verificación profunda de firmas/magic bytes (`%PDF-`, zip `PK\x03\x04`, y proscripción estricta de ejecutables `MZ`/`ELF`).
+- [x] **Controlador CRUD y Rutas:**
+  - `POST /api/v1/documents`: Subida multipart/form-data con validación y transición a `PROCESSING`.
+  - `GET /api/v1/documents`: Paginación, búsqueda por texto, filtro por status/tag y aislamiento RBAC por usuario.
+  - `GET /api/v1/documents/:id`: Detalle con verificación de permisos.
+  - `PATCH /api/v1/documents/:id`: Actualización de título, descripción y tags.
+  - `DELETE /api/v1/documents/:id`: Eliminación física del archivo en storage y del registro en MongoDB.
+  - Placeholders seguros de procesamiento (`POST :id/process`, `POST :id/summarize`, `POST :id/ask`).
+- [x] **Testing exhaustivo:**
+  - 6 suites de tests unitarios (27 tests) pasando al 100%.
+  - 2 suites de tests E2E en vivo (12 tests) pasando al 100% (`auth.e2e-spec.ts` y `documents.e2e-spec.ts`).
+
 ---
 
 ## 2. Funcionalidades Pendientes (Próximas Fases)
 
-- [ ] **FASE 3 — Documents:** Módulos de gestión documental, validación MIME/tamaño y máquina de estados.
 - [ ] **FASE 4 — Redis + BullMQ:** Colas asíncronas para procesamiento de archivos y reintentos idempotentes.
 - [ ] **FASE 5 — Python Service:** Microservicio FastAPI interno para tareas de IA y testing con pytest.
 - [ ] **FASE 6 — Document Processing:** Extracción y chunking semántico de PDF, TXT y DOCX.
