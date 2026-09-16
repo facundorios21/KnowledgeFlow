@@ -47,18 +47,12 @@ Este documento registra de forma continua el avance del proyecto, su estado téc
 
 ---
 
-## 3. Bugs Conocidos y Restricciones Técnicas
+## 3. Restricciones Técnicas y Estado del Entorno
 
-1. **Docker Engine inactivo en el Host:**
-   * *Diagnóstico:* Docker Desktop no se encuentra corriendo en el sistema Windows anfitrión.
-   * *Impacto:* Los contenedores no podrán inicializarse hasta que el usuario inicie Docker Desktop.
-   * *Solución:* Mantener la posibilidad de iniciar servicios localmente o solicitar el encendido de Docker Desktop cuando se ejecute la integración.
-2. **Python no instalado en el PATH de Windows:**
-   * *Diagnóstico:* Solo existen ejecutables stub de Windows Store.
-   * *Impacto:* Los tests y desarrollo de `ai-service` dependen del contenedor Docker o de la instalación de Python 3.11+.
-3. **Workspace bajo OneDrive:**
-   * *Diagnóstico:* Posible interferencia de la sincronización de archivos con `node_modules` y `.git`.
-   * *Mitigación:* Se excluyen rigurosamente carpetas temporales y compiladas mediante `.gitignore`.
+* **Docker Engine:** Activo y verificado (`Docker 28.5.2` en ejecución).
+* **Python en el Host:** Instalado y verificado (`Python 3.14.7` disponible en PATH).
+* **Sincronización de OneDrive:** Inactiva para este proyecto, eliminando riesgos de bloqueo de archivos I/O.
+* **Mapeo de Puertos:** Puerto 5432 ocupado por contenedor preexistente `db-hackaton`; resuelto asignando el puerto host `5433` a `keycloak-db`.
 
 ---
 
@@ -68,8 +62,9 @@ Este documento registra de forma continua el avance del proyecto, su estado téc
 * **D-002 (Separación de Bases de Datos):** PostgreSQL se destina pura y exclusivamente a Keycloak (`keycloak-db`). Toda la persistencia de la lógica de negocio (usuarios, documentos, fragmentos vectoriales, conversaciones) reside en MongoDB.
 * **D-003 (Manejo de Credenciales y Secretos):** La clave API de Gemini detectada en `api_key.txt` queda aislada de Git y se traslada a variables de entorno locales `.env`. La comunicación interna NestJS ↔ FastAPI utiliza una clave de servicio compartida (`INTERNAL_SERVICE_SECRET`).
 * **D-004 (Abstracción de VectorStore):** Se define un diseño desacoplado para la búsqueda vectorial que admita MongoDB Vector Search nativo o fallback algorítmico local, asegurando portabilidad sin obligar a usar MongoDB Atlas en desarrollo.
+* **D-005 (Mitigación de Colisión de Puertos Host):** `keycloak-db` expone el puerto `5433:5432` en el host para no entrar en conflicto con la instancia preexistente `db-hackaton` (puerto 5432), manteniendo la resolución interna del contenedor intacta en el puerto estándar 5432.
 
 ---
 
 ## 5. Próximo Paso Inmediato
-* Presentar la conclusión de la **FASE 0** y solicitar aprobación para iniciar la **FASE 1 — Backend Foundation**.
+* Proceder a la **FASE 1 — Backend Foundation** (NestJS, Mongoose, Swagger, Health checks y logging estructurado).
