@@ -6,8 +6,8 @@ Este documento registra de forma continua el avance del proyecto, su estado téc
 
 ## Estado General
 
-* **Fase Actual:** `FASE 0 — Architecture`
-* **Progreso Global:** 1 / 18 fases completadas (Fase 0 finalizada).
+* **Fase Actual:** `FASE 1 — Backend Foundation` (Completada)
+* **Progreso Global:** 2 / 18 fases completadas (Fases 0 y 1 finalizadas).
 * **Fecha de Última Actualización:** 2026-09-16
 
 ---
@@ -23,12 +23,28 @@ Este documento registra de forma continua el avance del proyecto, su estado téc
 - [x] **Orquestación de infraestructura:** Creación de `docker-compose.yml` multiserver validado sintácticamente (Keycloak con PostgreSQL dedicado, MongoDB, Redis, backend NestJS, servicio FastAPI de IA, frontend React).
 - [x] **Documentación técnica fundacional:** Creación del `README.md` inicial con arquitectura, flujos, contratos y guía de inicio.
 
+### FASE 1 — Backend Foundation (Completada)
+- [x] **Setup de NestJS:** Inicialización del backend en `backend/` con TypeScript estricto, decoradores y dependencias modernas.
+- [x] **Configuración validada con Joi:** Esquema exhaustivo en `config/env.validation.ts` y cargador tipado en `config/configuration.ts`.
+- [x] **Persistencia Mongoose & MongoDB:** Integración reactiva de Mongoose con manejo de reconexiones y esquema base de `User`.
+- [x] **Observabilidad y Logging estructurado:** `CustomLoggerService` (formateado en desarrollo, JSON estructurado en producción) e interceptor de latencia HTTP (`LoggingInterceptor`).
+- [x] **Manejo unificado de errores:** `HttpExceptionFilter` global con códigos HTTP semánticos y sin filtración de stacktraces en producción.
+- [x] **Health Check con Terminus:** Endpoint `GET /health` público verificando ping a MongoDB y uptime del sistema.
+- [x] **Documentación OpenAPI / Swagger:** Configuración de Swagger en `/api/docs` con soporte de esquemas y autenticación Bearer JWT.
+- [x] **Capa de Identidad y Autorización:**
+  - `JwtStrategy` con `jwks-rsa` para validación dinámica de claves públicas de Keycloak.
+  - `JwtAuthGuard` con soporte de decorador `@Public()` para endpoints abiertos.
+  - `RolesGuard` con `@Roles(UserRole.ADMIN, UserRole.USER)` para control de acceso RBAC.
+  - Sincronización automática de perfil de usuario Keycloak en MongoDB mediante `UsersService`.
+  - Endpoint `GET /api/v1/auth/me` para devolver el contexto del usuario autenticado y sus roles.
+- [x] **Testing automatizado:** 4 suites de tests unitarios (11 pruebas) pasando al 100% (`HealthController`, `UsersService`, `AuthController`, `RolesGuard`).
+- [x] **Dockerización:** `Dockerfile` multi-stage (builder y producción con usuario no privilegiado `node` y health check) y `.dockerignore`.
+
 ---
 
 ## 2. Funcionalidades Pendientes (Próximas Fases)
 
-- [ ] **FASE 1 — Backend Foundation:** Inicializar proyecto NestJS, setup modular, Mongoose, health checks, Swagger, validación de variables de entorno y base de integración OIDC.
-- [ ] **FASE 2 — Identity & Authentication:** Realm Keycloak `KnowledgeFlow`, flujos OIDC con PKCE, validación JWKS en NestJS, RBAC y sincronización de perfiles en MongoDB.
+- [ ] **FASE 2 — Identity & Authentication:** Keycloak Realm `KnowledgeFlow` con Docker, configuración del cliente OIDC para React con PKCE, roles de Realm/Resource, pruebas de flujo completo y provisionamiento.
 - [ ] **FASE 3 — Documents:** Módulos de gestión documental, validación MIME/tamaño y máquina de estados.
 - [ ] **FASE 4 — Redis + BullMQ:** Colas asíncronas para procesamiento de archivos y reintentos idempotentes.
 - [ ] **FASE 5 — Python Service:** Microservicio FastAPI interno para tareas de IA y testing con pytest.
