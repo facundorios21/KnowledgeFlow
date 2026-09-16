@@ -6,8 +6,8 @@ Este documento registra de forma continua el avance del proyecto, su estado téc
 
 ## Estado General
 
-* **Fase Actual:** `FASE 1 — Backend Foundation` (Completada)
-* **Progreso Global:** 2 / 18 fases completadas (Fases 0 y 1 finalizadas).
+* **Fase Actual:** `FASE 2 — Identity & Authentication` (Completada)
+* **Progreso Global:** 3 / 18 fases completadas (Fases 0, 1 y 2 finalizadas).
 * **Fecha de Última Actualización:** 2026-09-16
 
 ---
@@ -40,11 +40,21 @@ Este documento registra de forma continua el avance del proyecto, su estado téc
 - [x] **Testing automatizado:** 4 suites de tests unitarios (11 pruebas) pasando al 100% (`HealthController`, `UsersService`, `AuthController`, `RolesGuard`).
 - [x] **Dockerización:** `Dockerfile` multi-stage (builder y producción con usuario no privilegiado `node` y health check) y `.dockerignore`.
 
+### FASE 2 — Identity & Authentication (Completada)
+- [x] **Keycloak Realm `KnowledgeFlow`:** Definición declarativa en `infrastructure/keycloak/knowledgeflow-realm.json`.
+- [x] **Cliente OIDC SPA con PKCE:** Cliente `knowledgeflow-frontend` configurado como público con desafío `S256` y redirecciones permitidas.
+- [x] **Cliente Backend Bearer:** Cliente `knowledgeflow-backend` para el servidor de recursos NestJS.
+- [x] **Roles RBAC en IdP:** Roles `ADMIN` y `USER` definidos en el Realm.
+- [x] **Usuarios de desarrollo aprovisionados:**
+  - Administrador: `admin_user` / `Admin123!` (Roles: `ADMIN`, `USER`).
+  - Usuario Estándar: `standard_user` / `User123!` (Role: `USER`).
+- [x] **Infraestructura en ejecución:** PostgreSQL (`keycloak-db`), Keycloak 24 (`keycloak`), MongoDB 7 (`mongodb`) y Redis 7 (`redis`) activos y saludables.
+- [x] **Testing E2E en Vivo:** Suite en `test/auth.e2e-spec.ts` validando endpoints públicos, rechazo 401 sin token/token inválido, y adquisición real de tokens OIDC con verificación del endpoint `GET /api/v1/auth/me` y sincronización en MongoDB (100% pasando).
+
 ---
 
 ## 2. Funcionalidades Pendientes (Próximas Fases)
 
-- [ ] **FASE 2 — Identity & Authentication:** Keycloak Realm `KnowledgeFlow` con Docker, configuración del cliente OIDC para React con PKCE, roles de Realm/Resource, pruebas de flujo completo y provisionamiento.
 - [ ] **FASE 3 — Documents:** Módulos de gestión documental, validación MIME/tamaño y máquina de estados.
 - [ ] **FASE 4 — Redis + BullMQ:** Colas asíncronas para procesamiento de archivos y reintentos idempotentes.
 - [ ] **FASE 5 — Python Service:** Microservicio FastAPI interno para tareas de IA y testing con pytest.
