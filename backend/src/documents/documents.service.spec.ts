@@ -7,12 +7,14 @@ import { STORAGE_PROVIDER } from './storage/storage-provider.interface';
 import { FileValidationService } from './validators/file-validation.service';
 import { CustomLoggerService } from '../common/logger/custom-logger.service';
 import { UserRole } from '../common/decorators/roles.decorator';
+import { DocumentProcessingProducer } from '../queues/producers/document-processing.producer';
 
 describe('DocumentsService', () => {
   let service: DocumentsService;
   let mockDocModel: any;
   let mockStorageProvider: any;
   let mockValidationService: any;
+  let mockProducer: any;
 
   const mockUser = { id: 'user-123', role: UserRole.USER };
   const mockAdmin = { id: 'admin-456', role: UserRole.ADMIN };
@@ -43,6 +45,13 @@ describe('DocumentsService', () => {
       }),
     };
 
+    mockProducer = {
+      enqueueDocumentProcessing: jest.fn().mockResolvedValue({
+        jobId: 'doc-process-doc-1',
+        deduplicated: false,
+      }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DocumentsService,
@@ -57,6 +66,10 @@ describe('DocumentsService', () => {
         {
           provide: FileValidationService,
           useValue: mockValidationService,
+        },
+        {
+          provide: DocumentProcessingProducer,
+          useValue: mockProducer,
         },
         {
           provide: CustomLoggerService,

@@ -12,6 +12,7 @@ import { FileValidationService } from './validators/file-validation.service';
 import { STORAGE_PROVIDER } from './storage/storage-provider.interface';
 import { LocalStorageProvider } from './storage/local-storage.provider';
 import { CustomLoggerService } from '../common/logger/custom-logger.service';
+import { QueuesModule } from '../queues/queues.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { CustomLoggerService } from '../common/logger/custom-logger.service';
       { name: DocumentEntity.name, schema: DocumentEntitySchema },
     ]),
     ConfigModule,
+    QueuesModule,
   ],
   controllers: [DocumentsController],
   providers: [

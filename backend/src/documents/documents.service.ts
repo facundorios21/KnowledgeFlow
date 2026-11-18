@@ -25,6 +25,7 @@ import {
 } from './dto/document-response.dto';
 import { UserRole } from '../common/decorators/roles.decorator';
 import { CustomLoggerService } from '../common/logger/custom-logger.service';
+import { DocumentProcessingProducer } from '../queues/producers/document-processing.producer';
 
 export interface UserContext {
   id: string;
@@ -39,6 +40,7 @@ export class DocumentsService {
     @Inject(STORAGE_PROVIDER)
     private readonly storageProvider: StorageProvider,
     private readonly fileValidationService: FileValidationService,
+    private readonly documentProcessingProducer: DocumentProcessingProducer,
     private readonly logger: CustomLoggerService,
   ) {}
 
@@ -76,6 +78,26 @@ export class DocumentsService {
       `Document created with ID ${doc._id} by user ${user.id}`,
       'DocumentsService',
     );
+
+    // 5. Enqueue asynchronous processing job in BullMQ
+    try {
+      await this.documentProcessingProducer.enqueueDocumentProcessing({
+        documentId: doc._id.toString(),
+        ownerId: user.id,
+        fileUrl: doc.fileUrl,
+        mimeType: doc.mimeType,
+        fileName: doc.fileName,
+      });
+    } catch (queueError) {
+      this.logger.error(
+        `Failed to enqueue processing job for document ${doc._id}: ${(queueError as Error).message}`,
+        (queueError as Error).stack,
+        'DocumentsService',
+      );
+      doc.status = DocumentStatus.FAILED;
+      doc.processingError = `Queue dispatch error: ${(queueError as Error).message}`;
+      await doc.save();
+    }
 
     return this.mapToDto(doc);
   }
@@ -172,8 +194,17 @@ export class DocumentsService {
     doc.processingError = undefined;
     await doc.save();
 
+    await this.documentProcessingProducer.enqueueDocumentProcessing({
+      documentId: doc._id.toString(),
+      ownerId: doc.ownerId.toString(),
+      fileUrl: doc.fileUrl,
+      mimeType: doc.mimeType,
+      fileName: doc.fileName,
+      forceReprocess: true,
+    });
+
     this.logger.log(
-      `Processing requested for document ${id} (Ready for BullMQ dispatch in Phase 4)`,
+      `Reprocessing job enqueued in BullMQ for document ${id}`,
       'DocumentsService',
     );
 

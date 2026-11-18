@@ -6,9 +6,9 @@ Este documento registra de forma continua el avance del proyecto, su estado téc
 
 ## Estado General
 
-* **Fase Actual:** `FASE 3 — Documents` (Completada)
-* **Progreso Global:** 4 / 18 fases completadas (Fases 0, 1, 2 y 3 finalizadas).
-* **Fecha de Última Actualización:** 2026-09-16
+* **Fase Actual:** `FASE 4 — Redis + BullMQ` (Completada)
+* **Progreso Global:** 5 / 18 fases completadas (Fases 0, 1, 2, 3 y 4 finalizadas).
+* **Fecha de Última Actualización:** 2026-11-18
 
 ---
 
@@ -66,11 +66,24 @@ Este documento registra de forma continua el avance del proyecto, su estado téc
   - 6 suites de tests unitarios (27 tests) pasando al 100%.
   - 2 suites de tests E2E en vivo (12 tests) pasando al 100% (`auth.e2e-spec.ts` y `documents.e2e-spec.ts`).
 
+### FASE 4 — Redis + BullMQ (Completada)
+- [x] **Módulo de Colas (`QueuesModule`):** Configuración de `@nestjs/bullmq` y `bullmq` conectada a Redis (`REDIS_HOST`, `REDIS_PORT`).
+- [x] **Cola `document-processing` y Contratos de Jobs:** Definición tipada de constantes, etapas (`process-document`, `extract-text`, `chunk-document`, `generate-embeddings`, `index-document`, `generate-summary`) y cargas útiles en `src/queues/constants/queue.constants.ts`.
+- [x] **Productor con Deduplicación (`DocumentProcessingProducer`):**
+  - Generación de `jobId` determinístico (`doc-process-${documentId}`) para evitar jobs duplicados en estados `active`, `waiting` o `delayed`.
+  - Limpieza automática de ejecuciones previas (`completed` o `failed`) cuando se solicita reprocesamiento.
+  - Configuración de 3 intentos (`attempts: 3`) con backoff exponencial (`delay: 2000ms`) y políticas de retención (`removeOnComplete`, `removeOnFail`).
+- [x] **Worker Asíncrono e Idempotente (`DocumentProcessingProcessor`):**
+  - Verificación de idempotencia previa al procesamiento: omite documentos ya en estado `READY` (salvo `forceReprocess: true`) o eliminados de la base de datos.
+  - Reporte de progreso por etapas (25%, 50%, 75%, 100%) y transición atómica a `READY`.
+  - Manejador `@OnWorkerEvent('failed')`: registra cada intento fallido y, al agotarse los reintentos configurados, marca el documento como `FAILED` persistiendo la causa en `processingError`.
+- [x] **Integración con `DocumentsService`:** Despacho automático no bloqueante al subir documentos (`POST /api/v1/documents`) y al solicitar reprocesamiento (`POST /api/v1/documents/:id/process`).
+- [x] **Testing Automatizado:** 8 suites de tests unitarios con **38 tests pasando al 100%** (incluyendo pruebas exhaustivas de deduplicación, backoff, idempotencia y agotamiento de reintentos).
+
 ---
 
 ## 2. Funcionalidades Pendientes (Próximas Fases)
 
-- [ ] **FASE 4 — Redis + BullMQ:** Colas asíncronas para procesamiento de archivos y reintentos idempotentes.
 - [ ] **FASE 5 — Python Service:** Microservicio FastAPI interno para tareas de IA y testing con pytest.
 - [ ] **FASE 6 — Document Processing:** Extracción y chunking semántico de PDF, TXT y DOCX.
 - [ ] **FASE 7 — Embeddings:** Generación de vectores con Google Gemini API y persistencia vectorial.
