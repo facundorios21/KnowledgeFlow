@@ -171,10 +171,10 @@ docker compose up --build
 ## 9. Roadmap de Desarrollo
 
 - [x] **FASE 0:** Arquitectura, diagnóstico del sistema, docker-compose, configuración y baseline.
-- [ ] **FASE 1:** Backend Foundation (NestJS, Mongoose, Swagger, Health Checks).
-- [ ] **FASE 2:** Identity & Authentication (Keycloak OIDC, PKCE, JWKS, RBAC).
-- [ ] **FASE 3:** Documents Module (CRUD, Uploads, estados).
-- [ ] **FASE 4:** Redis + BullMQ (Colas de procesamiento e idempotencia).
+- [x] **FASE 1:** Backend Foundation (NestJS, Mongoose, Swagger, Health Checks).
+- [x] **FASE 2:** Identity & Authentication (Keycloak OIDC, PKCE, JWKS, RBAC).
+- [x] **FASE 3:** Documents Module (CRUD, Uploads, estados).
+- [x] **FASE 4:** Redis + BullMQ (Colas de procesamiento e idempotencia).
 - [ ] **FASE 5:** Python AI Microservice (FastAPI foundation, health y seguridad interna).
 - [ ] **FASE 6:** Document Processing (Extracción y chunking de PDF, DOCX, TXT).
 - [ ] **FASE 7:** Embeddings & Vector Storage.

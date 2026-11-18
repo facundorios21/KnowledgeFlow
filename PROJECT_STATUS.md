@@ -116,8 +116,25 @@ Este documento registra de forma continua el avance del proyecto, su estado téc
 * **D-003 (Manejo de Credenciales y Secretos):** La clave API de Gemini detectada en `api_key.txt` queda aislada de Git y se traslada a variables de entorno locales `.env`. La comunicación interna NestJS ↔ FastAPI utiliza una clave de servicio compartida (`INTERNAL_SERVICE_SECRET`).
 * **D-004 (Abstracción de VectorStore):** Se define un diseño desacoplado para la búsqueda vectorial que admita MongoDB Vector Search nativo o fallback algorítmico local, asegurando portabilidad sin obligar a usar MongoDB Atlas en desarrollo.
 * **D-005 (Mitigación de Colisión de Puertos Host):** `keycloak-db` expone el puerto `5433:5432` en el host para no entrar en conflicto con la instancia preexistente `db-hackaton` (puerto 5432), manteniendo la resolución interna del contenedor intacta en el puerto estándar 5432.
+* **D-006 (Validación Criptográfica Dinámica vía JWKS):** `JwtStrategy` utiliza `jwks-rsa` con caché y rate-limit para verificar firmas RSA256 de tokens emitidos por Keycloak sin claves estáticas hardcodeadas.
+* **D-007 (Guards Globales por Defecto con `@Public()`):** Todos los endpoints de NestJS están protegidos por `JwtAuthGuard` y `RolesGuard` a nivel global en `AppModule`, excepto las rutas decoradas explícitamente con `@Public()` (`/health`, `/api/docs`).
+* **D-008 (Sincronización Transparente de Identidad):** MongoDB no almacena contraseñas; `UsersService.findOrCreateFromKeycloak` sincroniza el perfil local (`keycloakUserId`, `email`, `name`, `role`) al validar el JWT.
+* **D-009 (Abstracción `StorageProvider` y Validación de Magic Bytes):** El almacenamiento físico se abstrae tras `STORAGE_PROVIDER` (`LocalStorageProvider` en `./uploads/documents/` con UUIDs) y `FileValidationService` inspecciona cabeceras binarias reales (`%PDF-`, `PK\x03\x04`, ausencia de bytes nulos y bloqueo de ejecutables `MZ`/`ELF`).
+* **D-010 (Idempotencia y Deduplicación en BullMQ):** `DocumentProcessingProducer` asigna `jobId: doc-process-${documentId}` evitando duplicados activos/en espera y configurando 3 intentos con backoff exponencial (2000ms). `DocumentProcessingProcessor` verifica estado previo en MongoDB antes de procesar y marca `FAILED` con `processingError` solo tras agotar los reintentos.
 
 ---
 
-## 5. Próximo Paso Inmediato
-* Proceder a la **FASE 1 — Backend Foundation** (NestJS, Mongoose, Swagger, Health checks y logging estructurado).
+## 5. Próximo Paso Inmediato (Punto de Continuación para Agentes)
+
+* **Siguiente Fase a Implementar:** **`FASE 5 — Python Service`** (definida en `plan.md`, secciones 6, 12 y 49).
+* **Alcance de la Fase 5:**
+  1. Inicializar el microservicio FastAPI dentro de `ai-service/` (`app/main.py`, `app/core/config.py`, `app/core/security.py`, `app/api/`, `app/models/`).
+  2. Configurar validación de secreto interno service-to-service (`X-Internal-Service-Key` validado contra `INTERNAL_SERVICE_SECRET`).
+  3. Implementar `GET /health` y los contratos Pydantic iniciales (`POST /documents/process`, `POST /embeddings`, `POST /chat`, `POST /summarize`).
+  4. Crear el módulo cliente HTTP en NestJS (`backend/src/ai/`) para comunicarse con `ai-service` enviando el secreto interno y vincularlo con `DocumentProcessingProcessor`.
+  5. Crear tests automatizados con `pytest` en `ai-service/tests/` y tests unitarios en NestJS (`backend/src/ai/`).
+* **Cómo retomar en otra máquina:**
+  1. Clonar el repositorio y copiar `.env.example` a `.env`.
+  2. Ejecutar `cd backend && npm install && npm test` (verifica las 8 suites / 38 tests unitarios de las Fases 1–4).
+  3. Levantar infraestructura si se desean correr los tests E2E: `docker compose up -d keycloak-db keycloak mongodb redis` y luego `npm run test:e2e`.
+  4. Indicar al agente: *"Lee `plan.md` y `PROJECT_STATUS.md` y continuá con la FASE 5"*.
